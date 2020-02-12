@@ -38,7 +38,7 @@ flags.DEFINE_string('tag_scheme', 'BIOES', '编码方式')
 # 训练相关
 flags.DEFINE_float('clip', 5, 'Grandient clip')
 flags.DEFINE_float('dropout', 0.5, 'Dropout rate')
-flags.DEFINE_integer('batch_size', 120, 'batch_size')
+flags.DEFINE_integer('batch_size', 128, 'batch_size')
 flags.DEFINE_float('lr', 0.001, 'learning rate')
 flags.DEFINE_string('optimizer', 'adam', '优化器')
 flags.DEFINE_boolean('pre_emb', True, '是否使用预训练')
@@ -88,7 +88,20 @@ def train():
     train_data = data_loader.prepare_dataset(train_sentences, word_to_id, tag_to_id)
     dev_data = data_loader.prepare_dataset(dev_sentences, word_to_id, tag_to_id)
     test_data = data_loader.prepare_dataset(test_sentences, word_to_id, tag_to_id)
-    print('train_data_num %i, dev_data_num %i, test_data_num %i' % (len(train_data), len(dev_data), len(test_data)))
+    print('train_data_num: %i, dev_data_num: %i, test_data_num: %i' % (len(train_data), len(dev_data), len(test_data)))
+
+    # 创建配置文件夹（结果，模型，日志）
+    model_utils.make_path(FLAGS)
+    # 读取配置信息
+    if os.path.isfile(FLAGS.config_file):
+        config = model_utils.load_config(FLAGS.config_file)
+    else:
+        config = model_utils.config_model(FLAGS, word_to_id, tag_to_id)
+        model_utils.save_config(config, FLAGS.config_file)
+
+    log_path = os.path.join('log', FLAGS.log_file)
+    logger = model_utils.get_logger(log_path)
+    model_utils.print_config(config, logger)
     print('over')
 
 
