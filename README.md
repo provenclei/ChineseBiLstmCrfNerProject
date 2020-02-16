@@ -6,7 +6,8 @@
 
 ## Requirement
 
-* TensorFlow = 1.13.1
-* python 3.6 
+* tensorflow = 1.13.1
+* numpy = 1.15.0
+* python = 3.6 
 * jieba == 0.42.1
 
