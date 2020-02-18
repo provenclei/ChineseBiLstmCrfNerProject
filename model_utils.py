@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 @Author         :  LEITENG
-@Version        :  
+@Version        :
 ------------------------------------
 @File           :  model_utils.py
-@Description    :  
+@Description    :
 @CreateTime     :  2020/2/7 16:27
 ------------------------------------
-@ModifyTime     :  
+@ModifyTime     :
 """
-from collections import OrderedDict
 import os
 import json
 import logging
+import codecs
 import tensorflow as tf
 from collections import OrderedDict
-import codecs
 from conlleval import return_report
 
 
@@ -41,7 +40,7 @@ def config_model(FLAGS, word_to_id, tag_to_id):
     config['dropout_keep'] = 1.0 - FLAGS.dropout
     config['optimizer'] = FLAGS.optimizer
     config['lr'] = FLAGS.lr
-    config['tag_scheme'] = FLAGS.tag_scheme
+    config['tag_schema'] = FLAGS.tag_schema
     config['pre_emb'] = FLAGS.pre_emb
     return config
 
@@ -176,11 +175,3 @@ def save_model(sess, model, path, logger):
     checkpoint_path = os.path.join(path, "ner.ckpt")
     model.saver.save(sess, checkpoint_path)
     logger.info('模型已经保存')
-
-
-def main():
-    pass
-
-
-if __name__ == '__main__':
-    main()

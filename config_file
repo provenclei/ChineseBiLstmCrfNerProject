@@ -10,6 +10,6 @@
     "clip": 5.0,
     "dropout_keep": 0.5,
     "lr": 0.001,
-    "tag_scheme": "BIOES",
+    "tag_schema": "BIOES",
     "pre_emb": true
 }

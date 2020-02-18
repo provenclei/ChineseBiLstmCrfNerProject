@@ -43,11 +43,11 @@ def load_sentences(path):
     return sentences
 
 
-def update_tag_scheme(sentences, tag_scheme):
+def update_tag_schema(sentences, tag_schema):
     """
     更新为指定编码
     :param sentence:
-    :param tag_scheme:
+    :param tag_schema:
     :return:
     """
     for i, s in enumerate(sentences):
@@ -58,11 +58,11 @@ def update_tag_scheme(sentences, tag_scheme):
             s_str = "\n".join(" ".join(w) for w in s)
             raise Exception("输入的句子应为BIO编码，请检查输入句子 %i:\n%s" % (i, s_str))
 
-        if tag_scheme == "BIO":
+        if tag_schema == "BIO":
             for word, new_tag in zip(s, tags):
                 word[-1] = new_tag
 
-        if tag_scheme == "BIOES":
+        if tag_schema == "BIOES":
             new_tags = data_utils.bio_to_bioes(tags)
             for word, new_tag in zip(s, new_tags):
                 word[-1] = new_tag
@@ -127,7 +127,7 @@ def prepare_dataset(sentences, word_to_id, tag_to_id, train=True):
 def main():
     path = 'data/ner.dev'
     sentences = load_sentences(path)
-    update_tag_scheme(sentences, "BIOES")
+    update_tag_schema(sentences, "BIOES")
     _, word_to_id, id_to_word = word_mapping(sentences)
     _, tag_to_id, id_to_tag = tag_mapping(sentences)
     dev_data = prepare_dataset(sentences, word_to_id, tag_to_id)

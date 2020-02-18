@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 @Author         :  LEITENG
-@Version        :  
+@Version        :
 ------------------------------------
 @File           :  main.py
-@Description    :  
+@Description    :
 @CreateTime     :  2020/2/7 16:27
 ------------------------------------
-@ModifyTime     :  
+@ModifyTime     :
 """
 # 系统包
 import os
@@ -33,7 +33,7 @@ flags.DEFINE_boolean('clean', True, '是否清理文件')
 flags.DEFINE_integer('seg_dim', 20, 'seg embedding size')
 flags.DEFINE_integer('word_dim', 100, 'word embedding')
 flags.DEFINE_integer('lstm_dim', 100, 'Num of hidden unis in lstm')
-flags.DEFINE_string('tag_scheme', 'BIOES', '编码方式')
+flags.DEFINE_string('tag_schema', 'BIOES', '编码方式')
 
 # 训练相关
 flags.DEFINE_float('clip', 5, 'Grandient clip')
@@ -70,9 +70,9 @@ def train():
     test_sentences = data_loader.load_sentences(FLAGS.test_file)
 
     # 转换编码 bio转bioes
-    data_loader.update_tag_scheme(train_sentences, FLAGS.tag_scheme)
-    data_loader.update_tag_scheme(test_sentences, FLAGS.tag_scheme)
-    data_loader.update_tag_scheme(dev_sentences, FLAGS.tag_scheme)
+    data_loader.update_tag_schema(train_sentences, FLAGS.tag_schema)
+    data_loader.update_tag_schema(test_sentences, FLAGS.tag_schema)
+    data_loader.update_tag_schema(dev_sentences, FLAGS.tag_schema)
 
     # 创建单词映射及标签映射
     if not os.path.isfile(FLAGS.map_file):
