@@ -87,28 +87,26 @@ class Model(object):
         :param word_inputs: one-hot编码
         :param seg_inputs: 分词特征
         :param config: 配置
-        :param name: 层命名
+        :param name: 层的命名
         :return:
         """
         embedding = []
         with tf.variable_scope("word_embedding" if not name else name), tf.device('/cpu:0'):
-            # TODO: self.word_lookup
-            word_lookup = tf.get_variable(
-                name="word_embedding",
-                shape=[self.num_words, self.word_dim],
-                initializer=self.initializer
+            self.word_lookup = tf.get_variable(
+                name = "word_embedding",
+                shape = [self.num_words, self.word_dim],
+                initializer = self.initializer
             )
-            embedding.append(tf.nn.embedding_lookup(word_lookup, word_inputs))
+            embedding.append(tf.nn.embedding_lookup(self.word_lookup, word_inputs))
 
             if config['seg_dim']:
                 with tf.variable_scope("seg_embedding"), tf.device('/cpu:0'):
-                    # TODO: self.seg_lookup
-                    seg_lookup = tf.get_variable(
-                        name="seg_embedding",
-                        shape=[self.num_sges, self.seg_dim],
-                        initializer=self.initializer
+                    self.seg_lookup = tf.get_variable(
+                        name = "seg_embedding",
+                        shape = [self.num_sges, self.seg_dim],
+                        initializer = self.initializer
                     )
-                    embedding.append(tf.nn.embedding_lookup(seg_lookup, seg_inputs))
+                    embedding.append(tf.nn.embedding_lookup(self.seg_lookup, seg_inputs))
             embed = tf.concat(embedding, axis=-1)
         return embed
 

@@ -1,13 +1,16 @@
-2020-02-13 00:55:44,703 - log/train.log - INFO - num_words      :	4314
-2020-02-13 00:55:44,703 - log/train.log - INFO - word_dim       :	100
-2020-02-13 00:55:44,704 - log/train.log - INFO - num_tags       :	13
-2020-02-13 00:55:44,704 - log/train.log - INFO - seg_dim        :	20
-2020-02-13 00:55:44,704 - log/train.log - INFO - lstm_dim       :	100
-2020-02-13 00:55:44,704 - log/train.log - INFO - batch_size     :	128
-2020-02-13 00:55:44,704 - log/train.log - INFO - optimizer      :	adam
-2020-02-13 00:55:44,704 - log/train.log - INFO - emb_file       :	data/wiki_100.utf8
-2020-02-13 00:55:44,705 - log/train.log - INFO - clip           :	5.0
-2020-02-13 00:55:44,705 - log/train.log - INFO - dropout_keep   :	0.5
-2020-02-13 00:55:44,705 - log/train.log - INFO - lr             :	0.001
-2020-02-13 00:55:44,705 - log/train.log - INFO - tag_scheme     :	BIOES
-2020-02-13 00:55:44,705 - log/train.log - INFO - pre_emb        :	True
+2020-02-18 15:06:15,260 - log/train.log - INFO - num_words      :	4314
+2020-02-18 15:06:15,260 - log/train.log - INFO - word_dim       :	100
+2020-02-18 15:06:15,260 - log/train.log - INFO - num_tags       :	13
+2020-02-18 15:06:15,260 - log/train.log - INFO - seg_dim        :	20
+2020-02-18 15:06:15,260 - log/train.log - INFO - lstm_dim       :	100
+2020-02-18 15:06:15,261 - log/train.log - INFO - batch_size     :	128
+2020-02-18 15:06:15,261 - log/train.log - INFO - optimizer      :	adam
+2020-02-18 15:06:15,261 - log/train.log - INFO - emb_file       :	data/wiki_100.utf8
+2020-02-18 15:06:15,261 - log/train.log - INFO - clip           :	5.0
+2020-02-18 15:06:15,261 - log/train.log - INFO - dropout_keep   :	0.5
+2020-02-18 15:06:15,261 - log/train.log - INFO - lr             :	0.001
+2020-02-18 15:06:15,261 - log/train.log - INFO - tag_scheme     :	BIOES
+2020-02-18 15:06:15,262 - log/train.log - INFO - pre_emb        :	True
+2020-02-18 15:07:33,292 - log/train.log - INFO - 重新训练模型
+2020-02-18 15:07:35,820 - log/train.log - INFO - 加载词向量成功
+2020-02-18 15:07:35,820 - log/train.log - INFO - 开始训练

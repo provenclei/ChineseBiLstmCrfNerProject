@@ -12,6 +12,9 @@
 import jieba
 import math
 import random
+import codecs
+import numpy as np
+import os
 
 
 def bio_to_bioes(tags):
@@ -129,6 +132,24 @@ def create_mapping(word_dict):
     return word_to_id, id_to_word
 
 
+def create_dico(item_list):
+    """
+    对于item_list中的每一个items，统计items中item在item_list中的次数
+    item:出现的次数
+    :param item_list:
+    :return:
+    """
+    assert type(item_list) is list
+    dico = {}
+    for items in item_list:
+        for item in items:
+            if item not in dico:
+                dico[item] = 1
+            else:
+                dico[item] += 1
+    return dico
+
+
 def get_seg_features(words):
     """
     利用jieba分词
@@ -149,6 +170,73 @@ def get_seg_features(words):
     return seg_features
 
 
+def augment_with_pretrained(dico_train, emb_path, test_words):
+    """
+    :param dico_train:
+    :param emb_path:
+    :param test_words:
+    :return:
+    """
+    assert os.path.isfile(emb_path)
+
+    # 加载与训练的词向量
+    pretrained = set(
+        [
+            line.rsplit()[0].strip() for line in codecs.open(emb_path, 'r', encoding='utf-8')
+        ]
+    )
+
+    if test_words is None:
+        for word in pretrained:
+            if word not in dico_train:
+                dico_train[word] = 0
+    else:
+        for word in test_words:
+            if any(x in pretrained for x in
+                   [word, word.lower()]
+                   ) and word not in dico_train:
+                dico_train[word] = 0
+
+    word_to_id, id_to_word = create_mapping(dico_train)
+
+    return dico_train, word_to_id, id_to_word
+
+
+def load_word2vec(emb_file, id_to_word, word_dim, old_weights):
+    """
+    :param emb_file:
+    :param id_to_word:
+    :param word_dim:
+    :param old_weights:
+    :return:
+    """
+    new_weights = old_weights
+    pre_trained = {}
+    emb_invalid = 0
+    for i, line in enumerate(codecs.open(emb_file, 'r', encoding='utf-8')):
+        line = line.rstrip().split()
+        if len(line) == word_dim + 1:
+            pre_trained[line[0]] = np.array(
+                [float(x) for x in line[1:]]
+            ).astype(np.float32)
+        else:
+            emb_invalid = emb_invalid + 1
+
+    if emb_invalid > 0:
+        print('waring: %i invalid lines' % emb_invalid)
+
+    num_words = len(id_to_word)
+    for i in range(num_words):
+        word = id_to_word[i]
+        if word in pre_trained:
+            new_weights[i] = pre_trained[word]
+        else:
+            pass
+    print('加载了 %i 个字向量' % len(pre_trained))
+
+    return new_weights
+
+
 class BatchManager(object):
     def __init__(self, data, batch_size):
         self.batch_data = self.sort_and_pad(data, batch_size)
@@ -156,7 +244,7 @@ class BatchManager(object):
 
     def sort_and_pad(self, data, batch_size):
         num_batch = int(math.ceil(len(data)/batch_size))
-        sorted_data = sorted(data, key=lambda x:len(x[0]))
+        sorted_data = sorted(data, key=lambda x : len(x[0]))
         batch_data = list()
         for i in range(num_batch):
             batch_data.append(self.pad_data(sorted_data[i*batch_size:(i+1)*batch_size]))

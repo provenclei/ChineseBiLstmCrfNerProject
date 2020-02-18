@@ -13,6 +13,10 @@ from collections import OrderedDict
 import os
 import json
 import logging
+import tensorflow as tf
+from collections import OrderedDict
+import codecs
+from conlleval import return_report
 
 
 def config_model(FLAGS, word_to_id, tag_to_id):
@@ -113,6 +117,65 @@ def print_config(config, logger):
     """
     for k, v in config.items():
         logger.info("{}:\t{}".format(k.ljust(15), v))
+
+
+def create(sess, Model, ckpt_path, load_word2vec, config, id_to_word, logger):
+    """
+    :param sess:
+    :param Model:
+    :param ckpt_path:
+    :param load_word2vec:
+    :param config:
+    :param id_to_word:
+    :param logger:
+    :return:
+    """
+    model = Model(config)
+
+    ckpt = tf.train.get_checkpoint_state(ckpt_path)
+    if ckpt and tf.train.checkpoint_exists(ckpt.model_checkpoint_path):
+        logger("读取模型参数，从%s" % ckpt.model_checkpoint_path)
+        model.saver.restore(sess, ckpt.model_checkpoint_path)
+    else:
+        logger.info("重新训练模型")
+        sess.run(tf.global_variables_initializer())
+        if config['pre_emb']:
+            emb_weights = sess.run(model.word_lookup.read_value())
+            emb_weights = load_word2vec(config['emb_file'], id_to_word, config['word_dim'], emb_weights)
+            sess.run(model.word_lookup.assign(emb_weights))
+            logger.info("加载词向量成功")
+    return model
+
+
+def test_ner(results, path):
+    """
+    :param results:
+    :param path:
+    :return:
+    """
+    output_file = os.path.join(path, 'ner_predict.utf8')
+    with codecs.open(output_file, "w", encoding="utf-8") as f_write:
+        to_write = []
+        for line in results:
+            for iner_line in line:
+                to_write.append(iner_line + "\n")
+            to_write.append("\n")
+        f_write.writelines(to_write)
+    eval_lines = return_report(output_file)
+    return eval_lines
+
+
+def save_model(sess, model, path, logger):
+    """
+    :param sess:
+    :param model:
+    :param path:
+    :param logger:
+    :return:
+    """
+    checkpoint_path = os.path.join(path, "ner.ckpt")
+    model.saver.save(sess, checkpoint_path)
+    logger.info('模型已经保存')
 
 
 def main():

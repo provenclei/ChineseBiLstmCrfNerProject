@@ -20,8 +20,8 @@ import itertools
 import data_utils
 import data_loader
 import model_utils
-# from model import Model
-# from data_utils import load_word2vec
+from model import Model
+from data_utils import load_word2vec
 
 flags = tf.app.flags
 
@@ -74,12 +74,24 @@ def train():
     data_loader.update_tag_scheme(test_sentences, FLAGS.tag_scheme)
     data_loader.update_tag_scheme(dev_sentences, FLAGS.tag_scheme)
 
-    # 创建单词映射和标签映射
+    # 创建单词映射及标签映射
     if not os.path.isfile(FLAGS.map_file):
-        _, word_to_id, id_to_word = data_loader.word_mapping(train_sentences)
+        if FLAGS.pre_emb:
+            dico_words_train = data_loader.word_mapping(train_sentences)[0]
+            dico_word, word_to_id, id_to_word = data_utils.augment_with_pretrained(
+                dico_words_train.copy(),
+                FLAGS.emb_file,
+                list(
+                    itertools.chain.from_iterable(
+                        [[w[0] for w in s] for s in test_sentences]
+                    )
+                )
+            )
+        else:
+            _, word_to_id, id_to_word = data_loader.word_mapping(train_sentences)
         _, tag_to_id, id_to_tag = data_loader.tag_mapping(train_sentences)
 
-        with open(FLAGS.map_file, 'wb') as f:
+        with open(FLAGS.map_file, "wb") as f:
             pickle.dump([word_to_id, id_to_word, tag_to_id, id_to_tag], f)
     else:
         with open(FLAGS.map_file, 'rb') as f:
@@ -88,10 +100,16 @@ def train():
     train_data = data_loader.prepare_dataset(train_sentences, word_to_id, tag_to_id)
     dev_data = data_loader.prepare_dataset(dev_sentences, word_to_id, tag_to_id)
     test_data = data_loader.prepare_dataset(test_sentences, word_to_id, tag_to_id)
+
+    train_manager = data_utils.BatchManager(train_data, FLAGS.batch_size)
+    dev_manager = data_utils.BatchManager(dev_data, FLAGS.batch_size)
+    test_manager = data_utils.BatchManager(test_data, FLAGS.batch_size)
+
     print('train_data_num: %i, dev_data_num: %i, test_data_num: %i' % (len(train_data), len(dev_data), len(test_data)))
 
     # 创建配置文件夹（结果，模型，日志）
     model_utils.make_path(FLAGS)
+
     # 读取配置信息
     if os.path.isfile(FLAGS.config_file):
         config = model_utils.load_config(FLAGS.config_file)
@@ -102,7 +120,52 @@ def train():
     log_path = os.path.join('log', FLAGS.log_file)
     logger = model_utils.get_logger(log_path)
     model_utils.print_config(config, logger)
-    print('over')
+
+    tf_config = tf.ConfigProto()
+    tf_config.gpu_options.allow_growth = True
+    steps_per_epoch = train_manager.len_data
+    with tf.Session(config=tf_config) as sess:
+        model = model_utils.create(sess, Model, FLAGS.ckpt_path, load_word2vec, config, id_to_word, logger)
+        logger.info("开始训练")
+        loss = []
+        for i in range(100):
+            for batch in train_manager.iter_batch(shuffle=True):
+                step, batch_loss = model.run_step(sess, True, batch)
+                loss.append(batch_loss)
+                if step % FLAGS.setps_chech == 0:
+                    iteration = step // steps_per_epoch + 1
+                    logger.info("iteration:{} step{}/{},NER loss:{:>9.6f}".format(iteration, step % steps_per_epoch,
+                                                                                  steps_per_epoch, np.mean(loss)))
+                    loss = []
+
+            best = evaluate(sess, model, "dev", dev_manager, id_to_tag, logger)
+
+            if best:
+                model_utils.save_model(sess, model, FLAGS.ckpt_path, logger)
+            evaluate(sess, model, "test", test_manager, id_to_tag, logger)
+
+
+def evaluate(sess, model, name, manager, id_to_tag, logger):
+    logger.info('evaluate:{}'.format(name))
+
+    ner_results = model.evaluate(sess, manager, id_to_tag)
+    eval_lines = model_utils.test_ner(ner_results, FLAGS.result_path)
+    for line in eval_lines:
+        logger.info(line)
+    f1 = float(eval_lines[1].strip().split()[-1])
+
+    if name == "dev":
+        best_test_f1 = model.best_dev_f1.eval()
+        if f1 > best_test_f1:
+            tf.assign(model.best_dev_f1, f1).eval()
+            logger.info('new best dev f1 socre:{:>.3f}'.format(f1))
+        return f1 > best_test_f1
+    elif name == "test":
+        best_test_f1 = model.best_test_f1.eval()
+        if f1 > best_test_f1:
+            tf.assign(model.best_test_f1, f1).eval()
+            logger.info('new best test f1 score:{:>.3f}'.format(f1))
+        return f1 > best_test_f1
 
 
 def main(_):
